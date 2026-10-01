@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestione Spese Personali</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="style.css">
+    <!-- Chart.js per il grafico del mese -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <h1><span class="logo">💰</span> <span class="grad">Gestione Spese</span></h1>
+            <p>Tieni traccia di entrate e uscite in locale.</p>
+        </header>
+
+        <!-- Main Balance Card Only -->
+        <section class="single-card-grid">
+            <div class="card card-balance" id="balance-card">
+                <div class="card-header">
+                    <h3>Saldo Totale</h3>
+                </div>
+                <p id="total-balance" class="amount">€ 0,00</p>
+            </div>
+        </section>
+
+        <!-- Calendario settimanale / mensile -->
+        <section id="calendar-section" class="card-box calendar-box">
+            <div class="cal-header">
+                <button id="cal-prev" class="cal-nav" type="button" title="Vai indietro" aria-label="Vai indietro">‹</button>
+                <div class="cal-center">
+                    <div id="cal-status" class="cal-status neutral"></div>
+                    <div id="cal-range" class="cal-range"></div>
+                </div>
+                <button id="cal-next" class="cal-nav" type="button" title="Vai avanti" aria-label="Vai avanti">›</button>
+            </div>
+
+            <div id="cal-grid" class="cal-grid"></div>
+
+            <div id="cal-summary" class="month-cards-grid cal-summary hidden"></div>
+
+            <div id="cal-chart" class="chart-wrapper cal-chart hidden">
+                <h3 id="cal-chart-title">📊 Grafico spese del mese</h3>
+                <div class="canvas-container">
+                    <canvas id="monthChart"></canvas>
+                </div>
+                <div id="no-chart-msg" class="empty-msg hidden">
+                    Nessuna spesa registrata in questo mese per mostrare il grafico.
+                </div>
+            </div>
+
+            <div class="cal-footer">
+                <button id="cal-toggle" class="btn btn-outline cal-toggle" type="button">📅 Vedi mese</button>
+            </div>
+        </section>
+
+        <!-- Form and Breakdown Layout -->
+        <div class="main-grid">
+            <!-- Form Section -->
+            <section class="form-section card-box">
+                <h2>➕ Aggiungi Transazione</h2>
+                <form id="transaction-form">
+                    <div class="form-group">
+                        <label for="description">Descrizione / Causale</label>
+                        <input type="text" id="description" placeholder="Es. Maglietta, Ricarica puff, Stipendio..." required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="amount">Importo (€)</label>
+                            <input type="number" id="amount" step="0.01" min="0.01" placeholder="0.00" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="type">Tipo</label>
+                            <select id="type" required>
+                                <option value="expense">Uscita (Spesa)</option>
+                                <option value="income">Entrata (Guadagno)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="category">Categoria</label>
+                            <select id="category" required>
+                                <option value="Ordini Vestiti">👕 Ordini Vestiti</option>
+                                <option value="Ordini Puff">💨 Ordini Puff</option>
+                                <option value="Svago">🍿 Svago</option>
+                                <option value="Investimenti">📈 Investimenti</option>
+                                <option value="Stipendio">💼 Stipendio / Entrate</option>
+                                <option value="Altro">📦 Altro</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="date">Data</label>
+                            <input type="date" id="date" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Aggiungi Transazione</button>
+                </form>
+            </section>
+
+            <!-- Breakdown Section -->
+            <section class="breakdown-section card-box">
+                <h2>📊 Ripartizione Spese Totali</h2>
+                <div id="category-breakdown" class="breakdown-container">
+                    <p class="empty-msg">Nessuna spesa registrata per mostrare la ripartizione.</p>
+                </div>
+            </section>
+        </div>
+
+        <!-- History Section -->
+        <section class="history-section card-box">
+            <div class="history-header">
+                <h2>📋 Storico Transazioni</h2>
+                <div class="filters">
+                    <input type="text" id="search-input" placeholder="Cerca...">
+                    <select id="filter-type">
+                        <option value="all">Tutti i tipi</option>
+                        <option value="expense">Solo Uscite</option>
+                        <option value="income">Solo Entrate</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table id="transactions-table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Descrizione</th>
+                            <th>Categoria</th>
+                            <th>Tipo</th>
+                            <th>Importo</th>
+                            <th>Azione</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactions-list">
+                        <!-- Transazioni dinamiche -->
+                    </tbody>
+                </table>
+                <div id="no-transactions" class="empty-msg">
+                    Nessuna transazione presente. Compila il modulo sopra per iniziare.
+                </div>
+            </div>
+
+            <!-- Svuota dati -->
+            <div class="data-actions">
+                <button id="clear-btn" class="btn btn-danger">🗑️ Svuota Tutti i Dati</button>
+            </div>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
